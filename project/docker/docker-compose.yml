@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  backEnd:
+    build: 
+      context: ./
+      dockerfile: ./project/docker/DockerfileBackEnd
+    image: img_back
+    volumes:
+      - ./:/mnt/app
+    ports:
+      - 5555:5555
+
+  frontEnd:
+    build:
+      context: ./
+      dockerfile: ./project/docker/DockerfileFrontEnd
+    image: img_front
+    volumes:
+      - ./:/mnt/app
+    ports:
+      - 5556:5556
+    depends_on:
+      - backEnd
