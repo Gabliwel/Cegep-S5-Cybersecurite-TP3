@@ -10,7 +10,7 @@ BACKEND_PORT = '5555'
 
 def build_home_page():
     ip = request.remote_addr
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/test')
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/')
     data = None
     
     if response.status_code == 200:
