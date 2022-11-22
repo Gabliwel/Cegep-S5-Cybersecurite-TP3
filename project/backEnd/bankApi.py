@@ -7,11 +7,11 @@ from flask_bcrypt import Bcrypt
 
 app = Flask("bankAPI")
 
-app.config['SQLALCHEMY_DATA_BASE_URI'] = 'sqlite///./users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./users.db'
 db = SQLAlchemy(app)
 
 app.config['BCRYPT_HANDLE_LONG_PASSWORDS'] = True
-flask_brypt = Bcrypt(app)
+flask_bcrypt = Bcrypt(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,7 +41,7 @@ def get_initial_client_ip(request):
             data = request.get_json()
             if 'ip' in data:
                 ip = data['ip']
-        else
+        else:
             print('not in json', flush = True)
     
     if ip == None:
@@ -53,6 +53,7 @@ def get_initial_client_ip(request):
 def welcomePage():
     rep = dict()
     rep['message'] = "Welcome to your favourite bank service ! :)"
+    return rep
 
 @app.route('/login')
 def login():
@@ -68,19 +69,20 @@ def login():
         return jsonify({'message' : 'Could not authenticate you'})
     
     if flask_bcrypt.check_password_hash(user.password, user.password):
-         return jsonify({'message' : 'You are authenticated from + ' ip + 'Welcome user : ' + user.name})
+        return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
 
 
 if __name__ == '__main__':
     with app.app_context():
-            db.create_all()
-        if len(sys.argv) > 2:
-            print("To many arguments : need 2")
-        elif len(sys.argv) == 2:
-            hashed_password = generate_password_hash(sys.argv[1])
-            new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True)
-            with app.app_context():
-                db.session.add(new_user)
-                db.session.commit()
-        elif len(sys.argv) == 1:
-            app.run(debug=True, host='0.0.0.0', port=5555)
+        db.create_all()
+
+    if len(sys.argv) > 2:
+        print("To many arguments : need 2")
+    elif len(sys.argv) == 2:
+        hashed_password = generate_password_hash(sys.argv[1])
+        new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True)
+        with app.app_context():
+            db.session.add(new_user)
+            db.session.commit()
+    elif len(sys.argv) == 1:
+        app.run(debug=True, host='0.0.0.0', port=5555)
