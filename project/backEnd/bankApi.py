@@ -71,6 +71,15 @@ def login():
          return jsonify({'message' : 'You are authenticated from + ' ip + 'Welcome user : ' + user.name})
 
 
+@app.route('/user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    hashed_password = generate_password_hash(data['password'])
+    dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
+    return jsonify({'message' : 'new user create'})
+
+
+
 if __name__ == '__main__':
     with app.app_context():
             db.create_all()
