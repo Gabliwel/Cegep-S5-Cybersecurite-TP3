@@ -8,7 +8,7 @@ app = Flask('FrontEnd')
 BACKEND_IP = 'backEnd'
 BACKEND_PORT = '5555'
 
-def build_home_page():
+def build_home_page(messages):
     ip = request.remote_addr
     response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/')
     data = None
@@ -84,10 +84,20 @@ def build_home_page():
     </body>
     </html>
     '''
-    
+
+def build_response(response)
+    if response.status_code == 200:
+        obj = json.loads(response.content.decode('utf-8'))
+        resp = make_response(build_home_page(obj))
+        return resp
+    else:
+        msg = response.content.decode('utf-8')
+        resp = make_response(build_home_page({'message':msg}))
+        return resp
+
 @app.route('/')
 def hello():
-	return build_home_page()
+	return build_home_page({})
 
 @app.route('/login', methods=['POST'])
 def login():
