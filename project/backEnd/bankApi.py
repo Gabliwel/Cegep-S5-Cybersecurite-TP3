@@ -84,7 +84,7 @@ def create_user():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-
+ 
     if len(sys.argv) > 2:
         print("To many arguments : need 2")
     elif len(sys.argv) == 2:
