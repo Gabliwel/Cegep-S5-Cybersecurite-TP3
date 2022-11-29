@@ -2,3 +2,5 @@ Flask
 requests
 Flask-SQLAlchemy
 Flask-bcrypt
+bleach
+pyjwt

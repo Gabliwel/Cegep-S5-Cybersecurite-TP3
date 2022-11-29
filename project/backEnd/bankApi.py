@@ -4,9 +4,11 @@ import datetime
 import sys
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+import jwt
 
 app = Flask("bankAPI")
 
+app.config['SECRET_KEY'] = "test"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./users.db'
 db = SQLAlchemy(app)
 
@@ -84,7 +86,7 @@ def login():
     
     if flask_bcrypt.check_password_hash(user.password, auth.password):
         token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
-        token = token.decode()
+        token = jwt.decode()
         return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
     
     return jsonify({'message' : 'Could not authenticate you'})
