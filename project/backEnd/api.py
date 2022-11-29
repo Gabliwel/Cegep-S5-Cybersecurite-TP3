@@ -21,21 +21,5 @@ def getInitialClientIP(request):
 		ip = request.remote_addr
 	return ip
 
-
-@app.route('/')
-def hello():
-	rep = dict()
-	rep['message'] = "Welcome to the task API."
-	ip = getInitialClientIP(request)
-	rep['ip'] = ip
-
-	print(str(rep), flush=True)
-	return rep
-
-@app.route('/test')
-def hello2():
-	return jsonify({'test':'bonsoir'})
-
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5555)

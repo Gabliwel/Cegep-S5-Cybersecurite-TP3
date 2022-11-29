@@ -10,7 +10,7 @@ BACKEND_PORT = '5555'
 
 def build_home_page(messages):
     ip = request.remote_addr
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/')
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/', json={'ip':ip})
     data = None
     
     if response.status_code == 200:
@@ -108,32 +108,43 @@ def login():
 @app.route('/research', methods=['POST'])
 def search():
     searchTerm = request.form['searchTerm']
-    return build_home_page({})
+    data = {'ip':request.remote_addr, 'searchTerm':searchTerm}
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    return build_response(response)
 
 @app.route('/viewAccount', methods=['GET'])
 def viewAccount():
-    return build_home_page({})
+    data = {'ip':request.remote_addr}
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    return build_response(response)
 
 @app.route('/transfert', methods=['POST'])
 def transfer():
     account = request.form['account']
     amount = request.form['amount']
-    return build_home_page({})
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/transfert', json=data)
+    return build_response(response)
 
 @app.route('/viewFaq', methods=['GET'])
 def viewFaq():
-    return build_home_page({})
+    data = {'ip':request.remote_addr}
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data)
+    return build_response(response)
 
 @app.route('/addFaqMsg', methods=['POST'])
 def addFaqMsg():
     msg = request.form['message']
-    return build_home_page({})
+    data = {'message':msg, 'ip':request.remote_addr}
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data)
+    return build_response(response)
 
 @app.route('/createAccount', methods=['POST'])
 def createAccount():
     account = request.form['username']
-    amount = request.form['password']
-    return build_home_page({})
+    password = request.form['password']
+    data = {'username':account, 'password':password, 'ip':request.remote_addr}
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    return build_response(response)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5556)
