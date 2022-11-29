@@ -85,7 +85,7 @@ def build_home_page(messages):
     </html>
     '''
 
-def build_response(response)
+def build_response(response):
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
         resp = make_response(build_home_page(obj))
