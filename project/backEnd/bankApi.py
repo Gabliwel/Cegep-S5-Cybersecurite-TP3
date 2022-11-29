@@ -65,6 +65,7 @@ def get_initial_client_ip(request):
 def welcomePage():
     rep = dict()
     rep['message'] = "Welcome to your favourite bank service ! :)"
+    print("34")
     return rep
 
 @app.route('/login')
