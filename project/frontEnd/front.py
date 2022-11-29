@@ -108,7 +108,7 @@ def login():
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
         print(obj, flush =True)
-        """ resp.set_cookie('jwt',obj['token'], httponly=True) """
+        resp.set_cookie('jwt',obj['token'], httponly=True)
     
     return resp
 
@@ -116,7 +116,7 @@ def login():
 def search():
     searchTerm = request.form['searchTerm']
     data = {'ip':request.remote_addr, 'searchTerm':searchTerm}
-    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/search', json=data)
     return build_response(response)
 
 @app.route('/viewAccount', methods=['GET'])

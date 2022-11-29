@@ -4,9 +4,11 @@ import datetime
 import sys
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+import jwt
 
 app = Flask("bankAPI")
 
+app.config['SECRET_KEY'] = "test"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./users.db'
 db = SQLAlchemy(app)
 
@@ -65,7 +67,6 @@ def get_initial_client_ip(request):
 def welcomePage():
     rep = dict()
     rep['message'] = "Welcome to your favourite bank service ! :)"
-    print("34")
     return rep
 
 @app.route('/login',  methods=['POST'])
@@ -78,14 +79,15 @@ def login():
         return jsonify({'message' : 'Could not authenticate you'})
 
     user = User.query.filter_by(name=auth.username).first()
-
+    print(user.id, flush=True)
+    print(wrap_user_in_dict(user), flush=True)
     if not user:
         return jsonify({'message' : 'Could not authenticate you'})
     
     if flask_bcrypt.check_password_hash(user.password, auth.password):
         token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
-        token = token.decode()
-        return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
+        print(token, flush=True)
+        return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
     
     return jsonify({'message' : 'Could not authenticate you'})
 
@@ -97,6 +99,21 @@ def create_user():
     dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
     return jsonify({'message' : 'new user create'})
 
+@app.route('/user', methods=['GET'])
+def view_user():
+    return jsonify({'message' : 'a'})
+
+@app.route('/search', methods=['POST'])
+def search_user():
+    return jsonify({'message' : 'a'})
+
+@app.route('/transfert', methods=['POST'])
+def transfer():
+    return jsonify({'message' : 'a'})
+
+@app.route('/faq', methods=['POST'])
+def create_faq():
+    return jsonify({'message' : 'a'})
 
 @app.route('/faq', methods=['GET'])
 def viewFaq():
