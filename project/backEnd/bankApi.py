@@ -68,11 +68,12 @@ def welcomePage():
     print("34")
     return rep
 
-@app.route('/login')
+@app.route('/login',  methods=['POST'])
 def login():
     ip = get_initial_client_ip(request)
 
     auth = request.authorization
+    print(auth, flush=True)
     if not auth or not auth.username or not auth.password:
         return jsonify({'message' : 'Could not authenticate you'})
 
@@ -81,8 +82,12 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'})
     
-    if flask_bcrypt.check_password_hash(user.password, user.password):
+    if flask_bcrypt.check_password_hash(user.password, auth.password):
+        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
+        token = token.decode()
         return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
+    
+    return jsonify({'message' : 'Could not authenticate you'})
 
 
 @app.route('/user', methods=['POST'])

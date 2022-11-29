@@ -107,7 +107,8 @@ def login():
     resp = build_response(response)
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
-        resp.set_cookie('jwt',obj['token'], httponly=True)
+        print(obj, flush =True)
+        """ resp.set_cookie('jwt',obj['token'], httponly=True) """
     
     return resp
 
