@@ -101,9 +101,16 @@ def hello():
 
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.form['username']
-    password = request.form['password']
-    return build_home_page({})
+    ip = request.remote_addr
+    data = {'ip':ip}
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/login', auth=(request.form['username'], request.form['password']), json=data)
+    resp = build_response(response)
+    if response.status_code == 200:
+        obj = json.loads(response.content.decode('utf-8'))
+        print(obj, flush =True)
+        """ resp.set_cookie('jwt',obj['token'], httponly=True) """
+    
+    return resp
 
 @app.route('/research', methods=['POST'])
 def search():

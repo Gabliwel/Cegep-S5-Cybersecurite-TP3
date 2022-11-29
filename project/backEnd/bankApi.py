@@ -65,13 +65,15 @@ def get_initial_client_ip(request):
 def welcomePage():
     rep = dict()
     rep['message'] = "Welcome to your favourite bank service ! :)"
+    print("34")
     return rep
 
-@app.route('/login')
+@app.route('/login',  methods=['POST'])
 def login():
     ip = get_initial_client_ip(request)
 
     auth = request.authorization
+    print(auth, flush=True)
     if not auth or not auth.username or not auth.password:
         return jsonify({'message' : 'Could not authenticate you'})
 
@@ -80,8 +82,21 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'})
     
-    if flask_bcrypt.check_password_hash(user.password, user.password):
+    if flask_bcrypt.check_password_hash(user.password, auth.password):
+        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
+        token = token.decode()
         return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
+    
+    return jsonify({'message' : 'Could not authenticate you'})
+
+
+@app.route('/user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    hashed_password = generate_password_hash(data['password'])
+    dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
+    return jsonify({'message' : 'new user create'})
+
 
 @app.route('/faq', methods=['GET'])
 def viewFaq():
@@ -96,7 +111,7 @@ def viewFaq():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-
+ 
     if len(sys.argv) > 2:
         print("To many arguments : need 2")
     elif len(sys.argv) == 2:
