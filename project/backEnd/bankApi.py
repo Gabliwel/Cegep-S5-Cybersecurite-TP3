@@ -36,7 +36,7 @@ def wrap_user_in_dict(user):
     user_data['cash_amount'] = user.cash_amount
     return user_data
 
-def wrap_faq_message_in_dict(user):
+def wrap_faq_message_in_dict(faq):
     faq_data = {}
     faq_data['id'] = faq.id
     faq_data['text'] = faq.text
@@ -98,6 +98,15 @@ def create_user():
     return jsonify({'message' : 'new user create'})
 
 
+@app.route('/faq', methods=['GET'])
+def viewFaq():
+    faqElements = Faq.query.all()
+    output = []
+    print(faqElements, flush = True)
+    for e in faqElements:
+        output.append(wrap_faq_message_in_dict(e))
+    print(output, flush = True)
+    return jsonify({'faq':output})
 
 if __name__ == '__main__':
     with app.app_context():
