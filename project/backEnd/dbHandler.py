@@ -9,6 +9,13 @@ def create_connection():
         print(e)
     return conn
 
+def create_faq(text, user_id):
+    conn = create_connection()
+    cur = conn.cursor()
+    cur.executescript("INSERT INTO faq (text, user_id) VALUES ('"+ text +"', '" + user_id +"')")
+    conn.commit()
+    conn.close()
+
 def create_user(uuid, name, password, isAdmin):
     conn = create_connection()
     cur = conn.cursor()

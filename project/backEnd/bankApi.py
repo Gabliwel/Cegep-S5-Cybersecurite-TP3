@@ -21,6 +21,11 @@ class User(db.Model):
     admin = db.Column(db.Boolean)
     cash_amount = db.Column(db.Float)
 
+class Faq(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(50))
+    user_id = db.Column(db.Integer)
+
 def wrap_user_in_dict(user):
     user_data = {}
     user_data['id'] = user.id
@@ -30,6 +35,13 @@ def wrap_user_in_dict(user):
     user_data['admin'] = user.admin
     user_data['cash_amount'] = user.cash_amount
     return user_data
+
+def wrap_faq_message_in_dict(user):
+    faq_data = {}
+    faq_data['id'] = faq.id
+    faq_data['text'] = faq.text
+    faq_data['user_id'] = faq.user_id
+    return faq_data
 
 def generate_password_hash(password):
     return flask_bcrypt.generate_password_hash(password, 13).decode()
@@ -81,8 +93,18 @@ if __name__ == '__main__':
     elif len(sys.argv) == 2:
         hashed_password = generate_password_hash(sys.argv[1])
         new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True)
+        #on prend pour acquis le premier user prend 1 comme id
+        new_faq = Faq(text="Promotion de fin session", user_id=1)
         with app.app_context():
-            db.session.add(new_user)
+            #clean up
+            User.query.delete()
+            Faq.query.delete()
             db.session.commit()
+
+            #default user
+            db.session.add(new_user)
+            db.session.add(new_faq)
+            db.session.commit()
+        app.run(debug=True, host='0.0.0.0', port=5555)
     elif len(sys.argv) == 1:
         app.run(debug=True, host='0.0.0.0', port=5555)

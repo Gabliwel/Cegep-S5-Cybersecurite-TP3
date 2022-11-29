@@ -18,7 +18,7 @@ def build_home_page(messages):
     else:
         data = {'message':'erreur!'}
     content_basic = str(data)
-    action_basic = 'action'
+    action_basic = str(messages)
 
     return '''<html>
     <header></header>
@@ -85,7 +85,7 @@ def build_home_page(messages):
     </html>
     '''
 
-def build_response(response)
+def build_response(response):
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
         resp = make_response(build_home_page(obj))
@@ -103,37 +103,37 @@ def hello():
 def login():
     username = request.form['username']
     password = request.form['password']
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/research', methods=['POST'])
 def search():
     searchTerm = request.form['searchTerm']
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/viewAccount', methods=['GET'])
 def viewAccount():
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/transfert', methods=['POST'])
 def transfer():
     account = request.form['account']
     amount = request.form['amount']
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/viewFaq', methods=['GET'])
 def viewFaq():
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/addFaqMsg', methods=['POST'])
 def addFaqMsg():
     msg = request.form['message']
-    return build_home_page()
+    return build_home_page({})
 
 @app.route('/createAccount', methods=['POST'])
 def createAccount():
     account = request.form['username']
     amount = request.form['password']
-    return build_home_page()
+    return build_home_page({})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5556)
