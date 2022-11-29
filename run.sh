@@ -1,9 +1,3 @@
-#!/bin/bash
-
-export PYTHONPATH=$PWD/project/
-echo python path is: 
-echo $PYTHONPATH
-
-echo "Launching program"
-#echo $@
-python3 "$@"
+docker-compose -f project/docker/docker-compose.yml --project-directory . down
+docker-compose -f project/docker/docker-compose.yml --project-directory . build
+docker-compose -f project/docker/docker-compose.yml --project-directory . up -d

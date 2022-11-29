@@ -1,0 +1,1 @@
+docker-compose -f project/docker/docker-compose.yml --project-directory . down
