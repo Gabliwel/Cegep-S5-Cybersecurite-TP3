@@ -108,7 +108,7 @@ def login():
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
         print(obj, flush =True)
-        """ resp.set_cookie('jwt',obj['token'], httponly=True) """
+        resp.set_cookie('jwt',obj['token'], httponly=True)
     
     return resp
 
@@ -150,7 +150,8 @@ def createAccount():
     account = request.form['username']
     password = request.form['password']
     data = {'username':account, 'password':password, 'ip':request.remote_addr}
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    token = request.cookies.get('jwt')
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 if __name__ == '__main__':

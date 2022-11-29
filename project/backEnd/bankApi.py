@@ -8,7 +8,7 @@ import jwt
 
 app = Flask("bankAPI")
 
-app.config['SECRET_KEY'] = "test"
+app.config['SECRET_KEY'] = 'test'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./users.db'
 db = SQLAlchemy(app)
 
@@ -63,6 +63,25 @@ def get_initial_client_ip(request):
     
     return ip
 
+def get_user_from_token(token):
+    token = None
+    if 'x-access-token' in request.headers['x-access-token']:
+        token = request.headers['x-access-token']
+        print('token', flush = True)
+
+    if not token:
+        print('not token', flush = True)
+        raise ValueError('Token is missing.')
+    
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'])
+    except:
+        print('data', flush = True)
+        raise ValueError('Token is invalid.')
+    
+    user_id = data['user_id']
+    return User.query.filter_by(id=user_id).first()
+
 @app.route('/')
 def welcomePage():
     rep = dict()
@@ -86,18 +105,25 @@ def login():
     
     if flask_bcrypt.check_password_hash(user.password, auth.password):
         token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
-        token = jwt.decode()
-        return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name})
-    
+        return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name, 'token': token  })
+
     return jsonify({'message' : 'Could not authenticate you'})
 
 
 @app.route('/user', methods=['POST'])
 def create_user():
-    data = request.get_json()
-    hashed_password = generate_password_hash(data['password'])
-    dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
-    return jsonify({'message' : 'new user create'})
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+    
+    if current_user.admin:
+        data = request.get_json()
+        hashed_password = generate_password_hash(data['password'])
+        dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
+        return jsonify({'message' : 'New user created'})
+
+    return jsonify({'message' : 'Access denied'})
 
 
 @app.route('/faq', methods=['GET'])
