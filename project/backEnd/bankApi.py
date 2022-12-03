@@ -5,10 +5,11 @@ import sys
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import jwt
+import dbHandler
 
 app = Flask("bankAPI")
 
-app.config['SECRET_KEY'] = "test"
+app.config['SECRET_KEY'] = 'super secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///./users.db'
 db = SQLAlchemy(app)
 
@@ -26,7 +27,7 @@ class User(db.Model):
 class Faq(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(50))
-    user_id = db.Column(db.Integer)
+    user_id = db.Column(db.String(50))
 
 def wrap_user_in_dict(user):
     user_data = {}
@@ -63,6 +64,26 @@ def get_initial_client_ip(request):
     
     return ip
 
+def get_user_from_token(token):
+    token = None
+    if 'x-access-token' in request.headers:
+        token = request.headers['x-access-token']
+
+    if not token:
+        print('not token', flush = True)
+        raise ValueError('Token is missing.')
+    
+    try:
+        print(token, flush = True)
+        print(app.config['SECRET_KEY'], flush = True)
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+    except Exception as e:
+        print(str(e), flush = True)
+        raise ValueError('Token is invalid.')
+    
+    user_id = data['user_id']
+    return User.query.filter_by(id=user_id).first()
+
 @app.route('/')
 def welcomePage():
     rep = dict()
@@ -76,54 +97,134 @@ def login():
     auth = request.authorization
     print(auth, flush=True)
     if not auth or not auth.username or not auth.password:
-        return jsonify({'message' : 'Could not authenticate you'})
+        return jsonify({'message' : 'Could not authenticate you'}), 401
 
     user = User.query.filter_by(name=auth.username).first()
     print(user.id, flush=True)
     print(wrap_user_in_dict(user), flush=True)
     if not user:
-        return jsonify({'message' : 'Could not authenticate you'})
+        return jsonify({'message' : 'Could not authenticate you'}), 401
     
     if flask_bcrypt.check_password_hash(user.password, auth.password):
-        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
+        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'], algorithm="HS256")
         print(token, flush=True)
         return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
     
-    return jsonify({'message' : 'Could not authenticate you'})
+    return jsonify({'message' : 'Could not authenticate you'}), 401
 
 
 @app.route('/user', methods=['POST'])
 def create_user():
-    data = request.get_json()
-    hashed_password = generate_password_hash(data['password'])
-    dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
-    return jsonify({'message' : 'new user create'})
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+    
+    if current_user.admin:
+        data = request.get_json()
+        hashed_password = generate_password_hash(data['password'])
+        dbHandler.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
+        return jsonify({'message' : 'New user created'})
+
+    return jsonify({'message' : 'Access denied'})
 
 @app.route('/user', methods=['GET'])
 def view_user():
-    return jsonify({'message' : 'a'})
+
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+    
+    if current_user:
+        rep = dict()
+        rep['message'] = 'Bonjour ' + current_user.name
+        rep['public_id'] = current_user.public_id
+        rep['solde'] = str(current_user.cash_amount) + '$'
+        return rep
+    return jsonify({'message': 'Access denied.'})
 
 @app.route('/search', methods=['POST'])
 def search_user():
-    return jsonify({'message' : 'a'})
+    if(request.data):
+        if request.is_json:
+            data = request.get_json()
+            if 'searchTerm' in data:
+                search = request.json['searchTerm']
+                count = User.query.filter_by(public_id=search).count()
+                if count == 0:
+                    return jsonify({'message' : search + ' n existe pas'})
+                else:
+                    return jsonify({'message' : search + ' existe'})
+    return jsonify({'message' : 'Une erreur est survenu'})
 
 @app.route('/transfert', methods=['POST'])
 def transfer():
-    return jsonify({'message' : 'a'})
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+
+    if not current_user:
+        return jsonify({'message': 'Access denied.'})
+
+    data = request.get_json()
+    amountStr = data['amount']
+    receiver = data['account']
+    amount = None
+
+    try:
+        amount = float(amountStr)
+    except Exception as e:
+        return jsonify({'message': 'Invalid amount'})
+
+    if current_user.cash_amount - amount < 0:
+        return jsonify({'message': 'Not enough money to transfer ' + str(amount) + '$'})
+
+    user2 = User.query.filter_by(public_id=receiver).first()
+    if not user2:
+        return jsonify({'message' : receiver + ' n existe pas'})
+
+    #donc cest possible
+    User.query.filter_by(public_id=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
+    db.session.commit()
+
+    User.query.filter_by(id=current_user.id).update(dict(cash_amount=(current_user.cash_amount-amount)))
+    db.session.commit()
+
+    return jsonify({'message' : 'Transfert complété!'})
 
 @app.route('/faq', methods=['POST'])
 def create_faq():
-    return jsonify({'message' : 'a'})
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+
+    if current_user:
+        data = request.get_json()
+        new_faq = Faq(text=data['message'], user_id=current_user.public_id)
+        db.session.add(new_faq)
+        db.session.commit()
+        return jsonify({'faq':'Message ajouté!'})
+    return jsonify({'message': 'Access denied.'})
 
 @app.route('/faq', methods=['GET'])
 def viewFaq():
-    faqElements = Faq.query.all()
-    output = []
-    print(faqElements, flush = True)
-    for e in faqElements:
-        output.append(wrap_faq_message_in_dict(e))
-    print(output, flush = True)
-    return jsonify({'faq':output})
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+    
+    if current_user:
+        faqElements = Faq.query.all()
+        output = []
+        print(faqElements, flush = True)
+        for e in faqElements:
+            output.append(wrap_faq_message_in_dict(e))
+        print(output, flush = True)
+        return jsonify({'faq':output})
+    return jsonify({'message': 'Access denied.'})
 
 if __name__ == '__main__':
     with app.app_context():
@@ -133,9 +234,10 @@ if __name__ == '__main__':
         print("To many arguments : need 2")
     elif len(sys.argv) == 2:
         hashed_password = generate_password_hash(sys.argv[1])
-        new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True)
-        #on prend pour acquis le premier user prend 1 comme id
-        new_faq = Faq(text="Promotion de fin session", user_id=1)
+        new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True, cash_amount=100)
+        new_user2 = User(public_id=str(uuid.uuid4()), name='Admin2', password=hashed_password, admin=True, cash_amount=100)
+        #on prend pour acquis le faq user prend 12345 comme user_id
+        new_faq = Faq(text="Promotion de fin session", user_id=new_user.public_id)
         with app.app_context():
             #clean up
             User.query.delete()
@@ -144,6 +246,7 @@ if __name__ == '__main__':
 
             #default user
             db.session.add(new_user)
+            db.session.add(new_user2)
             db.session.add(new_faq)
             db.session.commit()
         app.run(debug=True, host='0.0.0.0', port=5555)

@@ -1,11 +1,11 @@
 import sqlite3
 
 def create_connection():
-    db_file = './users.db'
+    db_file = './instance/users.db'
     conn = None
     try:
         conn = sqlite3.connect(db_file)
-    except Error as e:
+    except Exception as e:
         print(e)
     return conn
 
@@ -19,7 +19,7 @@ def create_faq(text, user_id):
 def create_user(uuid, name, password, isAdmin):
     conn = create_connection()
     cur = conn.cursor()
-    cur.executescript("INSERT INTO user (public_id, name, password, admin) VALUES ('"+ uuid +"', '" + name +"', '"+ password +"', False)")
+    cur.executescript("INSERT INTO user (public_id, name, password, admin, cash_amount) VALUES ('"+ uuid +"', '" + name +"', '"+ password +"', False, 0)")
     conn.commit()
     conn.close()
 

@@ -122,35 +122,41 @@ def search():
 @app.route('/viewAccount', methods=['GET'])
 def viewAccount():
     data = {'ip':request.remote_addr}
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    token = request.cookies.get('jwt')
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 @app.route('/transfert', methods=['POST'])
 def transfer():
     account = request.form['account']
     amount = request.form['amount']
-    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/transfert', json=data)
+    data = {'ip':request.remote_addr, 'account':account, 'amount':amount}
+    token = request.cookies.get('jwt')
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/transfert', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 @app.route('/viewFaq', methods=['GET'])
 def viewFaq():
     data = {'ip':request.remote_addr}
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data)
+    token = request.cookies.get('jwt')
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 @app.route('/addFaqMsg', methods=['POST'])
 def addFaqMsg():
     msg = request.form['message']
     data = {'message':msg, 'ip':request.remote_addr}
-    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data)
+    token = request.cookies.get('jwt')
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/faq', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 @app.route('/createAccount', methods=['POST'])
 def createAccount():
     account = request.form['username']
     password = request.form['password']
-    data = {'username':account, 'password':password, 'ip':request.remote_addr}
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data)
+    data = {'name':account, 'password':password, 'ip':request.remote_addr}
+    token = request.cookies.get('jwt')
+    response = requests.post('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data, headers={'x-access-token' : token})
     return build_response(response)
 
 if __name__ == '__main__':

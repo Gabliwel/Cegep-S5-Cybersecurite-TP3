@@ -2,4 +2,5 @@ Flask
 requests
 Flask-SQLAlchemy
 Flask-bcrypt
-pyjwt
+bleach
+PyJWT==2.3.0
