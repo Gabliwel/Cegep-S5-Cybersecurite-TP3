@@ -23,12 +23,23 @@ def create_user(uuid, name, password, isAdmin):
     conn.commit()
     conn.close()
 
-def user_exists(user_id):
+def user_exists(name):
     conn = create_connection()
     cur = conn.cursor()
-    cur.executescript("SELECT * FROM user WHERE id = " + user_id)
+    cur.execute("SELECT * FROM user WHERE name = '" + name + "'")
 
-    responseLenght =len(cur.fetchall()[0])
-    conn.commit()
+    result = cur.fetchall()
+    data = {}
+    index = 0
+    #if len(result) > 0:
+    for row in result:
+        small_data = {}
+        small_data['id'] = row[1]
+        small_data['name'] = row[2]
+        data[index] = small_data
+        index+=1
+
+    #responseLenght =len(cur.fetchall()[0])
     conn.close()
-    return bool(responseLenght > 0)
+    return data
+    #return bool(responseLenght > 0)

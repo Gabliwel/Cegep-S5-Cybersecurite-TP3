@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, make_response
+import hashlib
 import uuid
 import datetime
 import sys
@@ -47,7 +48,9 @@ def wrap_faq_message_in_dict(faq):
     return faq_data
 
 def generate_password_hash(password):
-    return flask_bcrypt.generate_password_hash(password, 13).decode()
+    hash = hashlib.md5(password.encode())
+    return hash.hexdigest()
+    #return flask_bcrypt.generate_password_hash(password, 13).decode()
 
 def get_initial_client_ip(request):
     ip = None
@@ -105,7 +108,8 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'}), 401
     
-    if flask_bcrypt.check_password_hash(user.password, auth.password):
+    #if flask_bcrypt.check_password_hash(user.password, auth.password):
+    if user.password == generate_password_hash(auth.password):
         token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'], algorithm="HS256")
         print(token, flush=True)
         return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
@@ -151,11 +155,16 @@ def search_user():
             data = request.get_json()
             if 'searchTerm' in data:
                 search = request.json['searchTerm']
-                count = User.query.filter_by(public_id=search).count()
+                print(str(search), flush=True)
+                output = dbHandler.user_exists(search)
+                return jsonify({'search':output})
+                '''
+                count = User.query.filter_by(name=search).count()
                 if count == 0:
                     return jsonify({'message' : search + ' n existe pas'})
                 else:
                     return jsonify({'message' : search + ' existe'})
+                '''
     return jsonify({'message' : 'Une erreur est survenu'})
 
 @app.route('/transfert', methods=['POST'])
@@ -181,12 +190,12 @@ def transfer():
     if current_user.cash_amount - amount < 0:
         return jsonify({'message': 'Not enough money to transfer ' + str(amount) + '$'})
 
-    user2 = User.query.filter_by(public_id=receiver).first()
+    user2 = User.query.filter_by(name=receiver).first()
     if not user2:
         return jsonify({'message' : receiver + ' n existe pas'})
 
     #donc cest possible
-    User.query.filter_by(public_id=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
+    User.query.filter_by(name=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
     db.session.commit()
 
     User.query.filter_by(id=current_user.id).update(dict(cash_amount=(current_user.cash_amount-amount)))
@@ -203,7 +212,7 @@ def create_faq():
 
     if current_user:
         data = request.get_json()
-        new_faq = Faq(text=data['message'], user_id=current_user.public_id)
+        new_faq = Faq(text=data['message'], user_id=current_user.id)
         db.session.add(new_faq)
         db.session.commit()
         return jsonify({'faq':'Message ajouté!'})
@@ -234,10 +243,14 @@ if __name__ == '__main__':
         print("To many arguments : need 2")
     elif len(sys.argv) == 2:
         hashed_password = generate_password_hash(sys.argv[1])
-        new_user = User(public_id=str(uuid.uuid4()), name='Admin', password=hashed_password, admin=True, cash_amount=100)
-        new_user2 = User(public_id=str(uuid.uuid4()), name='Admin2', password=hashed_password, admin=True, cash_amount=100)
-        #on prend pour acquis le faq user prend 12345 comme user_id
-        new_faq = Faq(text="Promotion de fin session", user_id=new_user.public_id)
+        new_user_boromir = User(public_id=str(uuid.uuid4()), name='Boromir', password=hashed_password, admin=True, cash_amount = 0)
+        new_user_flag = User(public_id=str(uuid.uuid4()), name='FLAG-2222222222', password=hashed_password, admin=False, cash_amount = 0)
+        new_user_gandalf = User(public_id=str(uuid.uuid4()), name='Gandalf', password=hashed_password, admin=False, cash_amount = 800)
+        hashed_password = generate_password_hash("qwerty")
+        new_user_pippin = User(public_id=str(uuid.uuid4()), name='Pippin', password=hashed_password, admin=False, cash_amount = 300)
+        new_faq = Faq(text="Promotion de fin session", user_id=1)
+        new_faq2 = Faq(text="La promo de l'année!", user_id=1)
+
         with app.app_context():
             #clean up
             User.query.delete()
@@ -245,9 +258,13 @@ if __name__ == '__main__':
             db.session.commit()
 
             #default user
-            db.session.add(new_user)
-            db.session.add(new_user2)
+            db.session.add(new_user_boromir)
+            db.session.add(new_user_flag)
+            db.session.add(new_user_gandalf)
+            db.session.add(new_user_pippin)
+
             db.session.add(new_faq)
+            db.session.add(new_faq2)
             db.session.commit()
         app.run(debug=True, host='0.0.0.0', port=5555)
     elif len(sys.argv) == 1:
