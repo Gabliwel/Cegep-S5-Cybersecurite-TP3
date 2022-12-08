@@ -145,6 +145,13 @@ def view_user():
         rep['message'] = 'Bonjour ' + current_user.name
         rep['public_id'] = current_user.public_id
         rep['solde'] = str(current_user.cash_amount) + '$'
+        if current_user.name == 'Gandalf':
+            rep['JWT'] = 'FLAG-5555555555'
+        elif current_user.name == 'Pippin':
+            rep['Hash)'] = 'FLAG-3333333333'
+        elif current_user.name == 'Saruman':
+            rep['CSRF)'] = 'FLAG-1111111111'
+
         return rep
     return jsonify({'message': 'Access denied.'})
 

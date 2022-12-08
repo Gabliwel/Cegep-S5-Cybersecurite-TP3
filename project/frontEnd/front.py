@@ -108,8 +108,15 @@ def login():
     if response.status_code == 200:
         obj = json.loads(response.content.decode('utf-8'))
         print(obj, flush =True)
-        resp.set_cookie('jwt',obj['token'], httponly=True)
-    
+        #resp.set_cookie('jwt',obj['token'], httponly=True)
+        resp.set_cookie('jwt',obj['token'])
+
+        #Pour le xss
+        if obj['message'].endswith("Gandalf"):
+            resp.set_cookie('xss', 'FLAG-4444444444')
+        else:
+            resp.set_cookie('xss', expires=0)
+
     return resp
 
 @app.route('/research', methods=['POST'])
