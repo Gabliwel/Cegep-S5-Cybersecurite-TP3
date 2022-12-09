@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import jwt
 import dbHandler
+import bleach
 
 app = Flask("bankAPI")
 
@@ -219,7 +220,7 @@ def create_faq():
 
     if current_user:
         data = request.get_json()
-        new_faq = Faq(text=data['message'], user_id=current_user.id)
+        new_faq = Faq(text=bleach.clean(data['message']), user_id=current_user.id)
         db.session.add(new_faq)
         db.session.commit()
         return jsonify({'faq':'Message ajouté!'})
