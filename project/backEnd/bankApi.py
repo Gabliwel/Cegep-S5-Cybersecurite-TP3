@@ -127,7 +127,10 @@ def create_user():
     if current_user.admin:
         data = request.get_json()
         hashed_password = generate_password_hash(data['password'])
-        dbHandler.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
+        new_user = User(public_id=str(uuid.uuid4()), name=data['name'], password=hashed_password, admin=False, cash_amount = 0)
+        with app.app_context():
+            db.session.add(new_user)
+            db.session.commit()
         return jsonify({'message' : 'New user created'})
 
     return jsonify({'message' : 'Access denied'})
@@ -162,16 +165,11 @@ def search_user():
             data = request.get_json()
             if 'searchTerm' in data:
                 search = request.json['searchTerm']
-                print(str(search), flush=True)
-                output = dbHandler.user_exists(search)
-                return jsonify({'search':output})
-                '''
                 count = User.query.filter_by(name=search).count()
                 if count == 0:
                     return jsonify({'message' : search + ' n existe pas'})
                 else:
                     return jsonify({'message' : search + ' existe'})
-                '''
     return jsonify({'message' : 'Une erreur est survenu'})
 
 @app.route('/transfert', methods=['POST'])

