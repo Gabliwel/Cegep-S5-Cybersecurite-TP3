@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, make_response
+import hashlib
 import uuid
 import datetime
 import sys
@@ -46,7 +47,9 @@ def wrap_faq_message_in_dict(faq):
     return faq_data
 
 def generate_password_hash(password):
-    return flask_bcrypt.generate_password_hash(password, 13).decode()
+    hash = hashlib.md5(password.encode())
+    return hash.hexdigest()
+    #return flask_bcrypt.generate_password_hash(password, 13).decode()
 
 def get_initial_client_ip(request):
     ip = None
@@ -102,10 +105,12 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'}), 401
     
-    if flask_bcrypt.check_password_hash(user.password, auth.password):
-        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'])
-        return jsonify({'message' : 'You are authenticated from ' + ip + 'Welcome user : ' + user.name, 'token': token  })
-
+    #if flask_bcrypt.check_password_hash(user.password, auth.password):
+    if user.password == generate_password_hash(auth.password):
+        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'], algorithm="HS256")
+        print(token, flush=True)
+        return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
+    
     return jsonify({'message' : 'Could not authenticate you'}), 401
 
 
@@ -124,6 +129,98 @@ def create_user():
 
     return jsonify({'message' : 'Access denied'})
 
+@app.route('/user', methods=['GET'])
+def view_user():
+
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+    
+    if current_user:
+        rep = dict()
+        rep['message'] = 'Bonjour ' + current_user.name
+        rep['public_id'] = current_user.public_id
+        rep['solde'] = str(current_user.cash_amount) + '$'
+        if current_user.name == 'Gandalf':
+            rep['JWT'] = 'FLAG-5555555555'
+        elif current_user.name == 'Pippin':
+            rep['Hash)'] = 'FLAG-3333333333'
+        elif current_user.name == 'Saruman':
+            rep['CSRF)'] = 'FLAG-1111111111'
+
+        return rep
+    return jsonify({'message': 'Access denied.'})
+
+@app.route('/search', methods=['POST'])
+def search_user():
+    if(request.data):
+        if request.is_json:
+            data = request.get_json()
+            if 'searchTerm' in data:
+                search = request.json['searchTerm']
+                print(str(search), flush=True)
+                output = dbHandler.user_exists(search)
+                return jsonify({'search':output})
+                '''
+                count = User.query.filter_by(name=search).count()
+                if count == 0:
+                    return jsonify({'message' : search + ' n existe pas'})
+                else:
+                    return jsonify({'message' : search + ' existe'})
+                '''
+    return jsonify({'message' : 'Une erreur est survenu'})
+
+@app.route('/transfert', methods=['POST'])
+def transfer():
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+
+    if not current_user:
+        return jsonify({'message': 'Access denied.'})
+
+    data = request.get_json()
+    amountStr = data['amount']
+    receiver = data['account']
+    amount = None
+
+    try:
+        amount = float(amountStr)
+    except Exception as e:
+        return jsonify({'message': 'Invalid amount'})
+
+    if current_user.cash_amount - amount < 0:
+        return jsonify({'message': 'Not enough money to transfer ' + str(amount) + '$'})
+
+    user2 = User.query.filter_by(name=receiver).first()
+    if not user2:
+        return jsonify({'message' : receiver + ' n existe pas'})
+
+    #donc cest possible
+    User.query.filter_by(name=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
+    db.session.commit()
+
+    User.query.filter_by(id=current_user.id).update(dict(cash_amount=(current_user.cash_amount-amount)))
+    db.session.commit()
+
+    return jsonify({'message' : 'Transfert complété!'})
+
+@app.route('/faq', methods=['POST'])
+def create_faq():
+    try:
+        current_user = get_user_from_token(request)
+    except Exception as e:
+        return jsonify({'message': str(e)}), 401
+
+    if current_user:
+        data = request.get_json()
+        new_faq = Faq(text=data['message'], user_id=current_user.id)
+        db.session.add(new_faq)
+        db.session.commit()
+        return jsonify({'faq':'Message ajouté!'})
+    return jsonify({'message': 'Access denied.'})
 
 @app.route('/faq', methods=['GET'])
 def viewFaq():
@@ -148,8 +245,9 @@ if __name__ == '__main__':
         new_user_gandalf = User(public_id=str(uuid.uuid4()), name='Gandalf', password=hashed_password, admin=False, cash_amount = 800)
         hashed_password = generate_password_hash("qwerty")
         new_user_pippin = User(public_id=str(uuid.uuid4()), name='Pippin', password=hashed_password, admin=False, cash_amount = 300)
-        #on prend pour acquis le premier user prend 1 comme id
         new_faq = Faq(text="Promotion de fin session", user_id=1)
+        new_faq2 = Faq(text="La promo de l'année!", user_id=1)
+
         with app.app_context():
             #clean up
             User.query.delete()
@@ -157,10 +255,8 @@ if __name__ == '__main__':
             db.session.commit()
 
             #default user
-            db.session.add(new_user_boromir)
-            db.session.add(new_user_flag)
-            db.session.add(new_user_gandalf)
-            db.session.add(new_user_pippin)
+            db.session.add(new_user)
+            db.session.add(new_user2)
             db.session.add(new_faq)
             db.session.commit()
         app.run(debug=True, host='0.0.0.0', port=5555)

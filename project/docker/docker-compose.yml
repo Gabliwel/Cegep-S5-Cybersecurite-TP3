@@ -22,3 +22,27 @@ services:
       - 5556:5556
     depends_on:
       - backEnd
+
+  csrf:
+    build:
+      context: ./
+      dockerfile: ./project/docker/DockerfileCSRF
+    image: img_csrf
+    volumes:
+      - ./:/mnt/app
+    ports:
+      - 5557:5557
+    depends_on:
+      - backEnd
+
+  xss:
+    build:
+      context: ./
+      dockerfile: ./project/docker/DockerfileXSS
+    image: img_xss
+    volumes:
+      - ./:/mnt/app
+    ports:
+      - 5558:5558
+    depends_on:
+      - backEnd
