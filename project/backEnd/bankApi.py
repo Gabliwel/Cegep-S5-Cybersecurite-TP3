@@ -48,9 +48,7 @@ def wrap_faq_message_in_dict(faq):
     return faq_data
 
 def generate_password_hash(password):
-    hash = hashlib.md5(password.encode())
-    return hash.hexdigest()
-    #return flask_bcrypt.generate_password_hash(password, 13).decode()
+    return flask_bcrypt.generate_password_hash(password, 13).decode()
 
 def get_initial_client_ip(request):
     ip = None
@@ -108,8 +106,7 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'}), 401
     
-    #if flask_bcrypt.check_password_hash(user.password, auth.password):
-    if user.password == generate_password_hash(auth.password):
+    if flask_bcrypt.check_password_hash(user.password, auth.password):
         token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'], algorithm="HS256")
         print(token, flush=True)
         return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
