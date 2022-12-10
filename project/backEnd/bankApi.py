@@ -81,8 +81,21 @@ def get_user_from_token(token):
     except:
         print('data', flush = True)
         raise ValueError('Token is invalid.')
+
+    
     
     user_id = data['user_id']
+    client_ip = get_initial_client_ip(request)
+    token_ip = data['ip']
+    if token_ip == None:
+        raise ValueError('Token is not ip found, old token format now invalid')
+    elif not client_ip == token_ip:
+        raise ValueError('Token is for an IP (' + token_ip + ') different than the client IP (' + client_ip + ')')
+
+    jwt_hash = hashlib.md5(token.decode()).hexdigest()
+    token_session = TokenSess.query.filter_by(id=jwt_hash).first()
+    if token_session == None:
+        raise ValueError('Token has been revoked server-side')
     return User.query.filter_by(id=user_id).first()
 
 @app.route('/')
@@ -107,9 +120,14 @@ def login():
     
     #if flask_bcrypt.check_password_hash(user.password, auth.password):
     if user.password == generate_password_hash(auth.password):
-        token = jwt.encode({'user_id':user.id}, app.config['SECRET_KEY'], algorithm="HS256")
-        print(token, flush=True)
-        return jsonify({'message' : 'You are authenticated from ' + ip + '. Welcome user : ' + user.name, 'token': token})
+        token = jwt.encode({'user_id' :user.id, 'ip' : ip,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10)}, app.config['SECRET_KEY']).decode()
+        jwt_hash = hashlib.md5(token).hexdigest()
+        token = token.decode()
+        part2=secrets.token_urlsafe(64)
+        token_session = TokenSess(id=jwt_hash, part=part2)
+        db.session.add(token_session)
+        db.session.commit()
+        return jsonify({'message' : 'Your are successfully authenticated. Welcome: ' + user.name, 'token':token})
     
     return jsonify({'message' : 'Could not authenticate you'}), 401
 
@@ -255,8 +273,10 @@ if __name__ == '__main__':
             db.session.commit()
 
             #default user
-            db.session.add(new_user)
-            db.session.add(new_user2)
+            db.session.add(new_user_boromir)
+            db.session.add(new_user_flag)
+            db.session.add(new_user_gandalf)
+            db.session.add(new_user_pippin)
             db.session.add(new_faq)
             db.session.commit()
         app.run(debug=True, host='0.0.0.0', port=5555)

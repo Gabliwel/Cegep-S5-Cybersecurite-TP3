@@ -10,7 +10,9 @@ BACKEND_PORT = '5555'
 
 def build_home_page(messages):
     ip = request.remote_addr
-    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/', json={'ip':ip})
+
+    token = request.cookies.get('jwt')
+    response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/', json={'ip':ip}, headers={'x-access-token': token})
     data = None
     
     if response.status_code == 200:
@@ -24,7 +26,7 @@ def build_home_page(messages):
     <header></header>
     <body>
         <h1>TP3</h1>
-        <h4>Réalisé par Gabriel bertrand et Keven Champagne</h4>
+        <h4>Réalisé par Gabriel Bertrand et Keven Champagne</h4>
         <br>
         Message(s) basique:
 		<ul>
