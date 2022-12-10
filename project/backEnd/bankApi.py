@@ -120,7 +120,7 @@ def login():
     
     #if flask_bcrypt.check_password_hash(user.password, auth.password):
     if user.password == generate_password_hash(auth.password):
-        token = jwt.encode({'user_id' :user.id, 'ip' : ip,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10)}, app.config['SECRET_KEY']).decode()
+        token = jwt.encode({'user_id' :user.id, 'ip' : ip,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10)}, app.config['SECRET_KEY'])
         jwt_hash = hashlib.md5(token).hexdigest()
         token = token.decode()
         part2=secrets.token_urlsafe(64)
@@ -145,7 +145,7 @@ def create_user():
         dbHandle.create_user(str(uuid.uuid4()), data['name'], hashed_password, False)
         return jsonify({'message' : 'New user created'})
 
-    return jsonify({'message' : 'Access denied'})
+    return jsonify({'message' : 'Access denied'}),401
 
 @app.route('/user', methods=['GET'])
 def view_user():
