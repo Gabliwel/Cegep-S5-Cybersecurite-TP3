@@ -6,6 +6,7 @@ import sys
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import jwt
+import secrets
 
 app = Flask("bankAPI")
 
@@ -28,6 +29,10 @@ class Faq(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(50))
     user_id = db.Column(db.Integer)
+
+class TokenSess(db.Model):
+    id = db.Column(db.String(32), primary_key = True)
+    part = db.Column(db.String(100))
 
 def wrap_user_in_dict(user):
     user_data = {}
@@ -66,9 +71,9 @@ def get_initial_client_ip(request):
     
     return ip
 
-def get_user_from_token(token):
+def get_user_from_token(request):
     token = None
-    if 'x-access-token' in request.headers['x-access-token']:
+    if 'x-access-token' in request.headers:
         token = request.headers['x-access-token']
         print('token', flush = True)
 
@@ -77,12 +82,11 @@ def get_user_from_token(token):
         raise ValueError('Token is missing.')
     
     try:
-        data = jwt.decode(token, app.config['SECRET_KEY'])
+        data = jwt.decode(token.decode(), app.config['SECRET_KEY'])
+        print('Date here' ,flush = True)
     except:
         print('data', flush = True)
         raise ValueError('Token is invalid.')
-
-    
     
     user_id = data['user_id']
     client_ip = get_initial_client_ip(request)
@@ -118,11 +122,11 @@ def login():
     if not user:
         return jsonify({'message' : 'Could not authenticate you'}), 401
     
-    #if flask_bcrypt.check_password_hash(user.password, auth.password):
     if user.password == generate_password_hash(auth.password):
         token = jwt.encode({'user_id' :user.id, 'ip' : ip,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10)}, app.config['SECRET_KEY'])
-        jwt_hash = hashlib.md5(token).hexdigest()
-        token = token.decode()
+        print(token.encode(), flush=True)
+        jwt_hash = hashlib.md5(token.encode()).hexdigest()
+        #token = token.decode(app.config['SECRET_KEY'])
         part2=secrets.token_urlsafe(64)
         token_session = TokenSess(id=jwt_hash, part=part2)
         db.session.add(token_session)

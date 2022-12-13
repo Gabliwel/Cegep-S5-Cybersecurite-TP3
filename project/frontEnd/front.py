@@ -133,6 +133,7 @@ def viewAccount():
     data = {'ip':request.remote_addr}
     token = request.cookies.get('jwt')
     response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/user', json=data, headers={'x-access-token' : token})
+    print('Response :' + str(response), flush=True)
     return build_response(response)
 
 @app.route('/transfert', methods=['POST'])
