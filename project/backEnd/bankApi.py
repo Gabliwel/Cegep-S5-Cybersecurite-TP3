@@ -82,9 +82,11 @@ def get_user_from_token(request):
         raise ValueError('Token is missing.')
     
     try:
-        data = jwt.decode(token.decode(), app.config['SECRET_KEY'])
+        print(token, flush=True)
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
         print('Date here' ,flush = True)
-    except:
+    except Exception as e:
+        print(str(e))
         print('data', flush = True)
         raise ValueError('Token is invalid.')
     
@@ -96,7 +98,7 @@ def get_user_from_token(request):
     elif not client_ip == token_ip:
         raise ValueError('Token is for an IP (' + token_ip + ') different than the client IP (' + client_ip + ')')
 
-    jwt_hash = hashlib.md5(token.decode()).hexdigest()
+    jwt_hash = hashlib.md5(token.encode()).hexdigest()
     token_session = TokenSess.query.filter_by(id=jwt_hash).first()
     if token_session == None:
         raise ValueError('Token has been revoked server-side')
@@ -167,9 +169,9 @@ def view_user():
         if current_user.name == 'Gandalf':
             rep['JWT'] = 'FLAG-5555555555'
         elif current_user.name == 'Pippin':
-            rep['Hash)'] = 'FLAG-3333333333'
+            rep['Hash'] = 'FLAG-3333333333'
         elif current_user.name == 'Saruman':
-            rep['CSRF)'] = 'FLAG-1111111111'
+            rep['CSRF'] = 'FLAG-1111111111'
 
         return rep
     return jsonify({'message': 'Access denied.'})
