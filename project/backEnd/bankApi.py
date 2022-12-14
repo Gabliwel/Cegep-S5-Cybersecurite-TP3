@@ -87,6 +87,45 @@ def get_user_from_token(token):
     user_id = data['user_id']
     return User.query.filter_by(id=user_id).first()
 
+@app.route('/csrfstatus', methods=['GET'])
+def validateCSRFToken():
+    try:
+        get_user_from_token(request)
+    except Exception as e:
+        print ('Problem with JWT token validation' + str(e), flush=True)
+        return jsonify({'message':'Authentication problem'})
+
+    token = request.headers['x-access-token']
+
+    date = request.get_json()
+    if not 'csrfToken' in data:
+        print('CSRF validation issue: no csrf token provided', flush = True)
+        return jsonify({'message':'Authentication problem'})
+
+    csrf_token = data['csrfToken']
+    jwt_hash = hashlib.md5(token.encode()).hexdigest()
+    token_session = TokenSess.query.filter_by(id=jwt_hash).first()
+    if token_session.part == csrf_token:
+        print('CSRF Validation success', flush=True)
+        return jsonify({'message': 'CSRF token validation success', 'correct': csrf_token})
+
+    print('CSRF validation issue : csrf token provided does no match jwt token', flush = True)
+    return jsonify({'message': 'Authentication problem'})
+
+@app.route('/csrftoken', methods=['GET'])
+def getCSRFToken():
+    try:
+        get_user_from_token(request)
+    except Exception as e:
+         print ('Problem with JWT token validation' + str(e), flush=True)
+         return jsonify({'message':'Authentication problem'})
+
+    token = request.headers['x-access-token']
+    jwt_hash = hashlib.md5(token.encode()).hexdigest()
+    token_session = TokenSess.query.filter_by(id=jwt_hash).first()
+    return jsonify({'message':'CSRF Token Retrieval', 'csrfToken': token_session.part})
+
+
 @app.route('/')
 def welcomePage():
     rep = dict()
