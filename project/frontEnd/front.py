@@ -23,12 +23,82 @@ def build_home_page(messages):
 
     my_csrf_token = "CSRF_EMPTY"
     response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/csrftoken', json={'ip':ip}, headers={'x-access-token': token})
-    obj = json.loads(response.content.decode('utf-8'))
+    if response.status_code == 200:
+        obj = json.loads(response.content.decode('utf-8'))
+    else:
+        obj = {'message':'erreur!'}
     if 'csrfToken' in obj:
         my_csrf_token = obj['csrfToken']
     print('Retrieved csrf token is:', my_csrf_token, flush=True)
     
-    return render_template('home.html', content_basic=my_content_basic, content_action=my_content_action, csrf_token=my_csrf_token)
+    return '''<html>
+    <header></header>
+    <body>
+        <h1>TP3</h1>
+        <h4>Réalisé par Gabriel bertrand et Keven Champagne</h4>
+        <br>
+        Message(s) basique:
+		<ul>
+			<li>''' + my_content_basic + '''</li>
+		</ul>
+        Message(s) d'action:
+		<ul>
+			<li>''' + my_action_basic + '''</li>
+		</ul>
+        <br>
+        <h5>Login</h5>
+        <form action="/login" method="POST">
+            <label>Nom d'utilisateur: </label>
+            <input type="text" name="username" required>
+            <label>Mot de passe: </label>
+            <input type="password" name="password" required>
+            <button type="submit">Login</button>
+        </form>
+        <br>
+        <h5>Recherche de compte</h5>
+        <form action="/research" method="POST">
+            <label>Terme de recherche: </label>
+            <input type="text" name="searchTerm" required>
+            <button type="submit">Rechercher</button>
+        </form>
+        <br>
+        <h5>Voir son compte</h5>
+        <a href="/viewAccount">Voir mon compte</a>
+        <br>
+        <h5>Transfert</h5>
+        <form action="/transfert" method="POST">
+            <label>Compte receveur: </label>
+            <input type="text" name="account" required>
+            <label>Montant: </label>
+            <input type="text" name="amount" required>
+            <input type="hidden" name="csrfToken" value="{{csrf_token}}">
+            <button type="submit">Faire le transfer</button>
+        </form>
+        <br>
+        <h5>Voir la FAQ</h5>
+        <a href="/viewFaq">Voir la FAQ</a>
+        <br>
+        <h5>Ajouter un message à la FAQ</h5>
+        <form action="/addFaqMsg" method="POST">
+            <label>Message: </label>
+            <input type="text" name="message" required>
+            <input type="hidden" name="csrfToken" value="{{csrf_token}}">
+            <button type="submit">Ajouter</button>
+        </form>
+        <br>
+        <h5>Créer un compte</h5>
+        <form action="/createAccount" method="POST">
+            <label>Nom: </label>
+            <input type="text" name="username" required>
+            <label>Mot de passe: </label>
+            <input type="password" name="password" required>
+            <input type="hidden" name="csrfToken" value="{{csrf_token}}">
+            <button type="submit">Créer le compte</button>
+        </form>
+    </body>
+    </html>
+    '''
+
    
 
 def build_response(response):
