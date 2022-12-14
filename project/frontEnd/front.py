@@ -10,7 +10,7 @@ BACKEND_PORT = '5555'
 
 def build_home_page(messages):
     ip = request.remote_addr
-
+    print(ip, flush=True)
     token = request.cookies.get('jwt')
     response = requests.get('http://' + BACKEND_IP + ':' + BACKEND_PORT + '/', json={'ip':ip}, headers={'x-access-token': token})
     data = None
