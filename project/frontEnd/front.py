@@ -38,10 +38,10 @@ def build_home_page(messages):
         <h5>Login</h5>
         <form action="/login" method="POST">
             <label>Nom d'utilisateur: </label>
-            <input type="text" name="username" required>
+            <input type="text" name="username" id="username" required>
             <label>Mot de passe: </label>
-            <input type="password" name="password" required>
-            <button type="submit">Login</button>
+            <input type="password" name="password" id="password" required>
+            <button type="submit" id="login">Login</button>
         </form>
         <br>
         <h5>Recherche de compte</h5>
@@ -64,7 +64,7 @@ def build_home_page(messages):
         </form>
         <br>
         <h5>Voir la FAQ</h5>
-        <a href="/viewFaq">Voir la FAQ</a>
+        <a href="/viewFaq" id="viewFaq">Voir la FAQ</a>
         <br>
         <h5>Ajouter un message à la FAQ</h5>
         <form action="/addFaqMsg" method="POST">

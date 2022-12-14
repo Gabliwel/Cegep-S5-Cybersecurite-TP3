@@ -148,9 +148,9 @@ def view_user():
         if current_user.name == 'Gandalf':
             rep['JWT'] = 'FLAG-5555555555'
         elif current_user.name == 'Pippin':
-            rep['Hash)'] = 'FLAG-3333333333'
-        elif current_user.name == 'Saruman':
-            rep['CSRF)'] = 'FLAG-1111111111'
+            rep['Hash'] = 'FLAG-3333333333'
+        elif current_user.name == 'Saruman' and current_user.cash_amount >= 1000:
+            rep['CSRF'] = 'FLAG-1111111111'
 
         return rep
     return jsonify({'message': 'Access denied.'})

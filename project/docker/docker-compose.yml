@@ -33,7 +33,9 @@ services:
     ports:
       - 5557:5557
     depends_on:
-      - backEnd
+      - frontEnd
+    environment:
+      - CYBER_CSRF_URL='http://frontEnd:5556/createAccount'
 
   xss:
     build:
@@ -46,3 +48,15 @@ services:
       - 5558:5558
     depends_on:
       - backEnd
+
+  client:
+    build:
+      context: ./
+      dockerfile: ./project/docker/DockerfileClient
+    image: img_client
+    volumes:
+      - ./:/mnt/app
+    ports:
+      - 5559:5559
+    depends_on:
+      - csrf

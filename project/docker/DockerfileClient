@@ -1,0 +1,6 @@
+FROM node:14-slim
+ADD ./client.js /
+RUN apt-get update
+RUN apt-get -y install chromium
+RUN npm install puppeteer
+CMD ["node", "client.js"]
