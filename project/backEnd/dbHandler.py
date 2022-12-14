@@ -23,10 +23,10 @@ def create_user(uuid, name, password, isAdmin):
     conn.commit()
     conn.close()
 
-def user_exists(name):
+def user_exists(public_id):
     conn = create_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM user WHERE name = '" + name + "'")
+    cur.execute("SELECT * FROM user WHERE public_id = '" + public_id + "'")
 
     result = cur.fetchall()
     data = {}
@@ -43,3 +43,4 @@ def user_exists(name):
     conn.close()
     return data
     #return bool(responseLenght > 0)
+

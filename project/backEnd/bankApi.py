@@ -186,13 +186,6 @@ def search_user():
                 print(str(search), flush=True)
                 output = dbHandler.user_exists(search)
                 return jsonify({'search':output})
-                '''
-                count = User.query.filter_by(name=search).count()
-                if count == 0:
-                    return jsonify({'message' : search + ' n existe pas'})
-                else:
-                    return jsonify({'message' : search + ' existe'})
-                '''
     return jsonify({'message' : 'Une erreur est survenu'})
 
 @app.route('/transfert', methods=['POST'])
@@ -218,12 +211,12 @@ def transfer():
     if current_user.cash_amount - amount < 0:
         return jsonify({'message': 'Not enough money to transfer ' + str(amount) + '$'})
 
-    user2 = User.query.filter_by(name=receiver).first()
+    user2 = User.query.filter_by(public_id=receiver).first()
     if not user2:
         return jsonify({'message' : receiver + ' n existe pas'})
 
     #donc cest possible
-    User.query.filter_by(name=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
+    User.query.filter_by(public_id=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
     db.session.commit()
 
     User.query.filter_by(id=current_user.id).update(dict(cash_amount=(current_user.cash_amount-amount)))
