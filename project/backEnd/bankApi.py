@@ -165,7 +165,7 @@ def search_user():
             data = request.get_json()
             if 'searchTerm' in data:
                 search = request.json['searchTerm']
-                count = User.query.filter_by(name=search).count()
+                count = User.query.filter_by(public_id=search).count()
                 if count == 0:
                     return jsonify({'message' : search + ' n existe pas'})
                 else:
@@ -195,12 +195,12 @@ def transfer():
     if current_user.cash_amount - amount < 0:
         return jsonify({'message': 'Not enough money to transfer ' + str(amount) + '$'})
 
-    user2 = User.query.filter_by(name=receiver).first()
+    user2 = User.query.filter_by(public_id=receiver).first()
     if not user2:
         return jsonify({'message' : receiver + ' n existe pas'})
 
     #donc cest possible
-    User.query.filter_by(name=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
+    User.query.filter_by(public_id=receiver).update(dict(cash_amount=(user2.cash_amount+amount)))
     db.session.commit()
 
     User.query.filter_by(id=current_user.id).update(dict(cash_amount=(current_user.cash_amount-amount)))
