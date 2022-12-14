@@ -112,8 +112,11 @@ def build_response(response):
         return resp
 
 def validateCSRFToken(ip,jwt_token, csrf_token):
-    response = requests.get('http://' + BACKEND_IP + BACKEND_PORT + '/csrfstatus', json={'csrfToken': csrf_token,'ip':ip}, headers={'x-access-token': jwt_token})
-    obj = json.loads(response.content.decode('utf-8'))
+    response = requests.get('http://' + BACKEND_IP + ':'+ BACKEND_PORT + '/csrfstatus', json={'csrfToken': csrf_token,'ip':ip}, headers={'x-access-token': jwt_token})
+    if response.status_code == 200:
+        obj = json.loads(response.content.decode('utf-8'))
+    else:
+        obj = {'message':'erreur!'}
     if 'correct' in obj:
         if csrf_token == obj['correct']:
             return True
